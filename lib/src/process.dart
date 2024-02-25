@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'passwd.dart';
+
 /// Linux Process Utilities
 /// See https://www.kernel.org/doc/html/latest/filesystems/proc.html
 ///
@@ -16,20 +18,19 @@ final _procDir = Directory('/proc');
 // the value is either a String or a number
 typedef ProcMap = Map<String, dynamic>;
 
-Future<Map<int, ProcMap>> getProcessInfo() async {
-  var m = <int, ProcMap>{};
+Future<List<int>> getAllPids() async {
+  var l = <int>[];
 
-  await for (var d in _procDir.list()) {
+  await for (final d in _procDir.list()) {
     var proc = d.path.split('/').last;
     var pid = int.tryParse(proc);
     // pid above might not be a number (/proc contains other things)
     // skip if not a process
     if (pid != null) {
-      var s = await parseProcStat(pid);
-      if (s.isNotEmpty) m[pid] = s;
+      l.add(pid);
     }
   }
-  return m;
+  return l;
 }
 
 /// Parses /proc/$pid/stat
@@ -167,6 +168,7 @@ Future<ProcMap> parseProcStatus(int pid) async {
 // A nicer representation of a process
 class Process {
   final ProcMap procMap; // the raw process attributes
+  final Passwd passwd; // the associated password entry
 
   // some convenience getters
   int get pid => procMap['pid'];
@@ -175,25 +177,32 @@ class Process {
   int get systemTime => procMap['stime'];
   String get state => procMap['state'];
   int get uid => procMap['Uid'];
+  String get userName => passwd.userName;
 
   Process(
     this.procMap,
+    this.passwd,
   );
 
   static Future<Process?> getProcess(int pid) async {
     var procMap = await parseProcStat(pid);
     var procStatusMap = await parseProcStatus(pid);
+    var pw = await Passwd.getPasswdEntry(procStatusMap['Uid']);
     procMap.addAll(procStatusMap);
-    return procMap.isEmpty ? null : Process(procMap);
+    return procMap.isEmpty ? null : Process(procMap, pw!);
   }
 
   static Future<List<Process>> getAllProcesses() async {
-    List<Process> l = [];
-    var plist = await getProcessInfo();
-    for (var info in plist.values) {
-      l.add(Process(info));
+    var pids = await getAllPids();
+
+    final l = <Process>[];
+
+    for (final pid in pids) {
+      var p = await getProcess(pid);
+      if (p != null) {
+        l.add(p);
+      }
     }
-    print('Got ${l.length} proceses');
     return l;
   }
 
@@ -223,15 +232,3 @@ class Process {
 }
 
 typedef ProcField = Comparable Function(Process p);
-
-// class ProcessSet {
-//   Set<Process> processSet;
-
-//   ProcessSet(this.processSet);
-
-//   static Future<ProcessSet> getProcesses() async {
-//     var p = await Process.getAllProcesses();
-//     p.sort();
-//     return ProcessSet(p);
-//   }
-// }
