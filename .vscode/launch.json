@@ -8,6 +8,12 @@
             "name": "linux_proc",
             "request": "launch",
             "type": "dart"
+        },
+        {
+            "name": "Dart (test/sysproc_test.dart)",
+            "type": "dart",
+            "request": "launch",
+            "program": "test/sysproc_test.dart"
         }
     ]
 }

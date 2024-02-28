@@ -134,7 +134,7 @@ Future<ProcMap> parseProcStatus(int pid) async {
   final file = File(filePath);
 
   if (!await file.exists()) {
-    throw Exception('Process with pid $pid not found');
+    return {};
   }
 
   final lines = await file.readAsLines();
@@ -179,6 +179,9 @@ class Process {
   int get uid => procMap['Uid'];
   String get userName => passwd.userName;
 
+  /// Time the process started after system boot
+  int get startTime => procMap['start_time'];
+
   Process(
     this.procMap,
     this.passwd,
@@ -187,6 +190,11 @@ class Process {
   static Future<Process?> getProcess(int pid) async {
     var procMap = await parseProcStat(pid);
     var procStatusMap = await parseProcStatus(pid);
+    // based on timing, the process might have gone away,
+    // so don't add it.
+    if (procMap.isEmpty || procStatusMap.isEmpty) {
+      return null;
+    }
     var pw = await Passwd.getPasswdEntry(procStatusMap['Uid']);
     procMap.addAll(procStatusMap);
     return procMap.isEmpty ? null : Process(procMap, pw!);
