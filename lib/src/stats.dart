@@ -8,22 +8,23 @@ typedef Stats = ({SystemStats stats, List<Process> processes});
 /// All the stats
 class StatsManager {
   late Timer timer;
-  StreamController<Stats> controller = StreamController<Stats>();
+  final _controller = StreamController<Stats>();
 
-  StatsManager() {
-    timer = Timer.periodic(Duration(seconds: 5), (_) => _getStats());
-    controller.onCancel = () => timer.cancel();
+  StatsManager({int refreshTimeSeconds = 2}) {
+    timer = Timer.periodic(
+        Duration(seconds: refreshTimeSeconds), (_) => _getStats());
+    _controller.onCancel = () => timer.cancel();
   }
 
-  Stream<Stats> get stream => controller.stream;
+  Stream<Stats> get stream => _controller.stream;
 
   void _getStats() async {
     var stats = await SystemStats.getStats();
     var procs = await Process.getAllProcesses();
-    controller.add((stats: stats, processes: procs));
+    _controller.add((stats: stats, processes: procs));
   }
 
-  void cancel() {
-    controller.close();
+  void close() {
+    _controller.close();
   }
 }

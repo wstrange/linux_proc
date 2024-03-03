@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:collection';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -18,17 +20,24 @@ typedef CPUMetrics = ({
 
 /// See
 /// https://www.kernel.org/doc/html/latest/filesystems/proc.html#miscellaneous-kernel-statistics-in-proc-stat
-///
+/// https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
 class SystemStats {
   final CPUMetrics cpu;
   final List<CPUMetrics> cpus;
+  final int processes;
   final int procsRunning;
   final int procsBlocked;
+  final int ctxSwitch;
+  final int bootTimeSeconds; // boot time in seconds since epoch
+
   SystemStats({
     required this.cpu,
     required this.cpus,
+    required this.processes,
     required this.procsRunning,
     required this.procsBlocked,
+    required this.ctxSwitch,
+    required this.bootTimeSeconds,
   });
 
   factory SystemStats.fromBuffer(Uint8List buf) {
@@ -43,7 +52,15 @@ class SystemStats {
       l.add(_parseCPU(lines[i++]));
     }
 
-    return SystemStats(cpu: cpu, cpus: l, procsRunning: 0, procsBlocked: 0);
+    return SystemStats(
+      cpu: cpu,
+      cpus: l,
+      ctxSwitch: _get2ndValue(lines[i++]),
+      bootTimeSeconds: _get2ndValue(lines[i++]),
+      processes: _get2ndValue(lines[i++]),
+      procsRunning: _get2ndValue(lines[i++]),
+      procsBlocked: _get2ndValue(lines[i++]),
+    );
   }
 
   // the sum of all the aggregate cpu work
@@ -56,10 +73,29 @@ class SystemStats {
       cpu.irq +
       cpu.softirq;
 
-  double get idleTimePercent => ((cpu.idle * 100.0) / totalCPU);
+  int get systemTime => cpu.system;
+  int get userTime => cpu.user + cpu.guest;
+  int get niceTime => cpu.nice - cpu.guestNice;
+  int get idleAllTime => cpu.idle + cpu.iowait;
+  int get systemAllTime => cpu.system + cpu.irq + cpu.softirq;
+  int get virtualTime => cpu.guest + cpu.guestNice;
+  int get totalTime =>
+      userTime +
+      niceTime +
+      systemAllTime +
+      idleAllTime +
+      cpu.steal +
+      virtualTime;
+
+  int get nonIdleTime =>
+      userTime + niceTime + systemTime + cpu.irq + cpu.softirq + cpu.steal;
+
+  int get totalUserTime => userTime + niceTime;
+
+  static final _whiteSpace = RegExp(r'\s+');
 
   static CPUMetrics _parseCPU(String l) {
-    var p = l.split(RegExp(r'\s+'));
+    var p = l.split(_whiteSpace);
 
     int i = 1; // start...
     return (
@@ -76,6 +112,7 @@ class SystemStats {
     );
   }
 
+  static int _get2ndValue(String l) => _getInt(l.split(_whiteSpace)[1]);
   static int _getInt(String t) => int.tryParse(t) ?? 0;
 
   static Future<SystemStats> getStats() async {
@@ -86,4 +123,42 @@ class SystemStats {
   @override
   String toString() => 'SystemsStats(cpu: $cpu)';
   static final _statsFile = File('/proc/stat');
+}
+
+/// Keep a running track of cpu status
+///
+class CPURunningStats {
+  SystemStats _prev;
+  SystemStats _current;
+
+  CPURunningStats(this._prev) : _current = _prev;
+
+  update(SystemStats newStats) {
+    _prev = _current;
+    _current = newStats;
+  }
+
+  int get totalDiff => _current.totalTime - _prev.totalTime == 0
+      ? 1
+      : _current.totalTime - _prev.totalTime;
+
+  int get systemTimeDiff => _current.systemAllTime - _prev.systemAllTime;
+  int get idleDiff => _current.idleAllTime - _prev.idleAllTime;
+  int get userTimeDiff => _current.userTime - _prev.userTime;
+
+  double get cpuPercentage => (totalDiff - idleDiff) / totalDiff * 100.0;
+
+  double get userTimePercentage =>
+      (_current.totalUserTime - _prev.totalUserTime) / totalDiff * 100.0;
+  double get systemTimePercentage =>
+      (_current.systemAllTime - _prev.systemAllTime) / totalDiff * 100.0;
+
+  double get idleTimePercentage =>
+      (_current.idleAllTime - _prev.idleAllTime) / totalDiff * 100.0;
+
+  double get cpuIdle => 100.0 - cpuPercentage;
+
+  @override
+  String toString() =>
+      'user: ${userTimePercentage.toStringAsFixed(0)} sys ${systemTimePercentage.toStringAsFixed(1)}   ${idleTimePercentage.toStringAsFixed(1)}';
 }

@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:linux_proc/linux_proc.dart';
 import 'package:test/test.dart';
-import 'dart:io';
-import 'dart:typed_data';
 
 main() async {
   test('systems stats', () async {
@@ -16,10 +14,17 @@ main() async {
 
   test('Stats stream', () async {
     var s = StatsManager();
-    Timer(Duration(seconds: 20), () => s.cancel());
+    Timer(Duration(seconds: 25), () => s.close());
 
+    CPURunningStats? _c;
     await for (var v in s.stream) {
-      print('Got value ${v.stats.cpu}  idle  = ${v.stats.idleTimePercent}');
+      // ignore: unnecessary_null_comparison
+      _c == null ? _c = CPURunningStats(v.stats) : _c.update(v.stats);
+
+      print(_c);
+
+      // print(
+      // 'System ${v.stats.systemTimePercentage}  idle  = ${v.stats.idleTimePercent} users-${v.stats.userTimePercentage}');
     }
 
     print('done');
