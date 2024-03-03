@@ -10,7 +10,7 @@ main() async {
     expect(stats.cpu.idle, isNonNegative);
 
     print('Stats = $stats');
-  });
+  });q
 
   test('Stats stream', () async {
     var s = StatsManager();
@@ -23,8 +23,6 @@ main() async {
 
       print(_c);
 
-      // print(
-      // 'System ${v.stats.systemTimePercentage}  idle  = ${v.stats.idleTimePercent} users-${v.stats.userTimePercentage}');
     }
 
     print('done');

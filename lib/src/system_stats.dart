@@ -138,13 +138,13 @@ class CPURunningStats {
     _current = newStats;
   }
 
+  // get the diff of total cpu time - but gaurd against a 0 value
+  // which happens the first time before update is called.
   int get totalDiff => _current.totalTime - _prev.totalTime == 0
       ? 1
       : _current.totalTime - _prev.totalTime;
 
-  int get systemTimeDiff => _current.systemAllTime - _prev.systemAllTime;
   int get idleDiff => _current.idleAllTime - _prev.idleAllTime;
-  int get userTimeDiff => _current.userTime - _prev.userTime;
 
   double get cpuPercentage => (totalDiff - idleDiff) / totalDiff * 100.0;
 
@@ -156,9 +156,7 @@ class CPURunningStats {
   double get idleTimePercentage =>
       (_current.idleAllTime - _prev.idleAllTime) / totalDiff * 100.0;
 
-  double get cpuIdle => 100.0 - cpuPercentage;
-
   @override
   String toString() =>
-      'user: ${userTimePercentage.toStringAsFixed(0)} sys ${systemTimePercentage.toStringAsFixed(1)}   ${idleTimePercentage.toStringAsFixed(1)}';
+      'us: ${userTimePercentage.toStringAsFixed(1)} sys ${systemTimePercentage.toStringAsFixed(1)}  id: ${idleTimePercentage.toStringAsFixed(1)}';
 }
