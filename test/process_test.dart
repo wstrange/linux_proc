@@ -10,7 +10,9 @@ main() async {
     for (int i = 0; i < 1; ++i) {
       stopwatch.reset();
       stopwatch.start();
-      var m = await Process.getAllProcesses();
+      var map = await Process.getAllProcesses();
+      var m = map.values.toList();
+
       // Process.sort(m, (p) => p.command, true);
       Process.sort(m, (p) => p.userTime, true);
       print(

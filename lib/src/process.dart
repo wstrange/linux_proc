@@ -165,10 +165,23 @@ Future<ProcMap> parseProcStatus(int pid) async {
   return values;
 }
 
-// A nicer representation of a process
+/// A nicer representation of a process
+///
+/// Note that "Time" values are Jiffies. This is the
+/// number of ticks of the system clock since the process was started.
+///
+/// On most systems you can get the clock rate (HZ) by running:
+/// `getconf CLK_TCK`.
+/// Typically 100 Hz
+///
 class Process {
   final ProcMap procMap; // the raw process attributes
-  final Passwd passwd; // the associated password entry
+  final Passwd passwd; // the associated password entry. Used to map user ids
+
+  // the percentage of CPU this process is consuming.
+  // To calculate this we need access to the previous value
+  // see [calculateCPUPercentage]
+  double cpuPercentage = 0.0;
 
   // some convenience getters
   int get pid => procMap['pid'];
@@ -178,6 +191,22 @@ class Process {
   String get state => procMap['state'];
   int get uid => procMap['Uid'];
   String get userName => passwd.userName;
+  int get totalCPU => userTime + systemTime;
+
+  // Calculate the percentage of CPU this process is consuming.
+  // As a side effect we set the [cpuPercentage] value so we
+  // can sort on it later.
+  // [prev] is the previous cpu times for this pid
+  // [systemCPUJiffies] is the total cpu time (user+sys) for all
+  // processes
+  double calculateCPUPercentage(Process prev, int deltaSystemCPU) {
+    if (pid != prev.pid) {
+      throw 'The previous process pid is not the same.';
+    }
+    final deltaCPU = totalCPU - prev.totalCPU;
+    cpuPercentage = (deltaCPU * 100.0) / deltaSystemCPU;
+    return cpuPercentage;
+  }
 
   /// Time the process started after system boot
   int get startTime => procMap['start_time'];
@@ -200,18 +229,20 @@ class Process {
     return procMap.isEmpty ? null : Process(procMap, pw!);
   }
 
-  static Future<List<Process>> getAllProcesses() async {
+  /// Get a map of all running process keyed by pid
+  ///
+  static Future<Map<int, Process>> getAllProcesses() async {
     var pids = await getAllPids();
 
-    final l = <Process>[];
+    final m = <int, Process>{};
 
     for (final pid in pids) {
       var p = await getProcess(pid);
       if (p != null) {
-        l.add(p);
+        m[pid] = p;
       }
     }
-    return l;
+    return m;
   }
 
   @override
@@ -228,15 +259,12 @@ class Process {
   @override
   int get hashCode => pid.hashCode;
 
+  /// Given a list of processes, sort by field (cpu, created, etc)
   static void sort(List<Process> l, ProcField getField, bool asc) {
     l.sort((a, b) => asc
         ? getField(a).compareTo(getField(b))
         : getField(b).compareTo(getField(a)));
   }
-
-  // static sortByCmd(List<Process> l) {
-  //   l.sort( (a,b) => a.)
-  // }
 }
 
 typedef ProcField = Comparable Function(Process p);

@@ -9,20 +9,25 @@ main() async {
 
     expect(stats.cpu.idle, isNonNegative);
 
-    print('Stats = $stats');
-  });q
+    print('S;tats = $stats');
+  });
 
   test('Stats stream', () async {
     var s = StatsManager();
     Timer(Duration(seconds: 25), () => s.close());
 
-    CPURunningStats? _c;
     await for (var v in s.stream) {
-      // ignore: unnecessary_null_comparison
-      _c == null ? _c = CPURunningStats(v.stats) : _c.update(v.stats);
+      var procs = v.processes;
+      var stats = v.stats;
 
-      print(_c);
+      var c = stats.cpuPercentage.toStringAsFixed(1);
+      var i = stats.idleTimePercentage.toStringAsFixed(1);
+      var sys = stats.systemTimePercentage.toStringAsFixed(1);
+      var u = stats.userTimePercentage.toStringAsFixed(1);
 
+      print('Stats cpu $c user $u sys $sys idle: $i');
+
+      // procs.sort((p) => p.cpuPercentage);
     }
 
     print('done');

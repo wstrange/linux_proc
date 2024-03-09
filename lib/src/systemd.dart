@@ -152,9 +152,8 @@ class OrgFreedesktopDBusPeer extends DBusRemoteObject {
   /// Stream of org.freedesktop.systemd1.Manager.Reloading signals.
   late final Stream<OrgFreedesktopDBusPeerReloading> reloading;
 
-  OrgFreedesktopDBusPeer(
-      DBusClient client, String destination, DBusObjectPath path)
-      : super(client, name: destination, path: path) {
+  OrgFreedesktopDBusPeer(super.client, String destination, DBusObjectPath path)
+      : super(name: destination, path: path) {
     WSPropertiesChanged = DBusRemoteObjectSignalStream(
             object: this,
             interface: 'org.freedesktop.DBus.Properties',
