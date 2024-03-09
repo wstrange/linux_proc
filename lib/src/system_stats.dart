@@ -176,7 +176,7 @@ class CPURunningStats {
       if (op == null) continue; // process possibly new
 
       // Set the processes cpu percentage so we can sort on it later
-      process.calculateCPUPercentage(op, systemCPUdiff);
+      process.updateCPUPercentage(op, systemCPUdiff);
     }
 
     newStats.updatePercentageStats(_stats);

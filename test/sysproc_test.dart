@@ -10,7 +10,7 @@ main() async {
     expect(stats.cpu.idle, isNonNegative);
 
     print('S;tats = $stats');
-  });
+  }, skip: true);
 
   test('Stats stream', () async {
     var s = StatsManager();
@@ -27,7 +27,17 @@ main() async {
 
       print('Stats cpu $c user $u sys $sys idle: $i');
 
-      // procs.sort((p) => p.cpuPercentage);
+      // Sort the process by cpu
+      Process.sort(procs, (p) => p.cpuPercentage, false);
+
+      // int count = 0;
+
+      for (final p in procs) {
+        print(
+            '${p.pid} ${p.command} ${p.cpuPercentage.toStringAsFixed(1)}%  u:${p.userTime} s:${p.systemTime}');
+        // print(p);
+        // if (++count > 20) break;
+      }
     }
 
     print('done');

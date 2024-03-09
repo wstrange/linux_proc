@@ -78,12 +78,14 @@ Future<ProcMap> parseProcStat(int pid) async {
       'state': nextVal(),
       'ppid': nextInt(),
       'pgrp': nextInt(),
-      'session': nextInt(),
+      'sid': nextInt(),
       'tty_nr': nextInt(),
-      'tpgid': nextInt(),
+      'tty_pgrp': nextInt(),
       'flags': nextInt(),
-      'minflt': nextInt(),
-      'majflt': nextInt(),
+      'min_flt': nextInt(),
+      'cmin_flt': nextInt(),
+      'maj_flt': nextInt(),
+      'cmaj_flt': nextInt(),
       'utime': nextInt(),
       'stime': nextInt(),
       'cutime': nextInt(),
@@ -194,18 +196,26 @@ class Process {
   int get totalCPU => userTime + systemTime;
 
   // Calculate the percentage of CPU this process is consuming.
-  // As a side effect we set the [cpuPercentage] value so we
+  // The side effect sets the [cpuPercentage] value so we
   // can sort on it later.
   // [prev] is the previous cpu times for this pid
   // [systemCPUJiffies] is the total cpu time (user+sys) for all
   // processes
-  double calculateCPUPercentage(Process prev, int deltaSystemCPU) {
+  void updateCPUPercentage(Process prev, int deltaSystemCPU) {
     if (pid != prev.pid) {
       throw 'The previous process pid is not the same.';
     }
+
+    if (deltaSystemCPU == 0) {
+      // avoid divide by zero
+      cpuPercentage = 0.0;
+      return;
+    }
+
     final deltaCPU = totalCPU - prev.totalCPU;
+
+    // print('delta cpu = $deltaCPU');
     cpuPercentage = (deltaCPU * 100.0) / deltaSystemCPU;
-    return cpuPercentage;
   }
 
   /// Time the process started after system boot
