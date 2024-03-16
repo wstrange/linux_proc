@@ -21,7 +21,7 @@ main() async {
       expect(m.length > 10, isTrue);
 
       for (var p in m) {
-        print('${p.pid}: ${p.command} u: ${p.userTime}');
+        print('${p.procPid}: ${p.command} u: ${p.userTime}');
       }
     }
   });
@@ -36,6 +36,6 @@ main() async {
   test('Get current process', () async {
     var p = await Process.getProcess(pid);
     expect(p, isNotNull);
-    expect(p!.pid, equals(pid));
+    expect(p!.procPid, equals(pid));
   });
 }

@@ -13,19 +13,18 @@ main() async {
   }, skip: true);
 
   test('Stats stream', () async {
-    var s = StatsManager();
+    var s = StatsManager(refreshTimeSeconds: 2);
     Timer(Duration(seconds: 25), () => s.close());
 
     await for (var v in s.stream) {
       var procs = v.processes;
       var stats = v.stats;
 
-      var c = stats.cpuPercentage.toStringAsFixed(1);
       var i = stats.idleTimePercentage.toStringAsFixed(1);
       var sys = stats.systemTimePercentage.toStringAsFixed(1);
       var u = stats.userTimePercentage.toStringAsFixed(1);
 
-      print('Stats cpu $c user $u sys $sys idle: $i');
+      print('Stats cpu user $u sys $sys idle: $i');
 
       // Sort the process by cpu
       Process.sort(procs, (p) => p.cpuPercentage, false);
@@ -34,7 +33,7 @@ main() async {
 
       for (final p in procs) {
         print(
-            '${p.pid} ${p.command} ${p.cpuPercentage.toStringAsFixed(1)}%  u:${p.userTime} s:${p.systemTime}');
+            '${p.procPid} ${p.command} ${p.cpuPercentage.toStringAsFixed(1)}%  u:${p.userTime} s:${p.systemTime}');
         // print(p);
         // if (++count > 20) break;
       }

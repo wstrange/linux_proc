@@ -186,7 +186,7 @@ class Process {
   double cpuPercentage = 0.0;
 
   // some convenience getters
-  int get pid => procMap['pid'];
+  int get procPid => procMap['pid'];
   String get command => procMap['cmd'];
   int get userTime => procMap['utime'];
   int get systemTime => procMap['stime'];
@@ -199,23 +199,13 @@ class Process {
   // The side effect sets the [cpuPercentage] value so we
   // can sort on it later.
   // [prev] is the previous cpu times for this pid
-  // [systemCPUJiffies] is the total cpu time (user+sys) for all
-  // processes
-  void updateCPUPercentage(Process prev, int deltaSystemCPU) {
-    if (pid != prev.pid) {
+  // [intervalSeconds] is the time between samples
+  void updateCPUPercentage(Process prev, double intervalSeconds) {
+    if (procPid != prev.procPid) {
       throw 'The previous process pid is not the same.';
     }
 
-    if (deltaSystemCPU == 0) {
-      // avoid divide by zero
-      cpuPercentage = 0.0;
-      return;
-    }
-
-    final deltaCPU = totalCPU - prev.totalCPU;
-
-    // print('delta cpu = $deltaCPU');
-    cpuPercentage = (deltaCPU * 100.0) / deltaSystemCPU;
+    cpuPercentage = (totalCPU - prev.totalCPU).toDouble() / intervalSeconds;
   }
 
   /// Time the process started after system boot
@@ -263,11 +253,11 @@ class Process {
   bool operator ==(covariant Process other) {
     if (identical(this, other)) return true;
 
-    return other.pid == pid;
+    return other.procPid == procPid;
   }
 
   @override
-  int get hashCode => pid.hashCode;
+  int get hashCode => procPid.hashCode;
 
   /// Given a list of processes, sort by field (cpu, created, etc)
   static void sort(List<Process> l, ProcField getField, bool asc) {

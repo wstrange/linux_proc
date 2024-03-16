@@ -32,7 +32,7 @@ void _printProcs(List<Process> plist) {
 
   for (final p in plist) {
     if (p.cpuPercentage == 0.0) continue;
-    console.writeAligned(p.pid, 8);
+    console.writeAligned(p.procPid, 8);
     console.writeAligned(p.command, 30);
     console.writeAligned(_dfmt(p.cpuPercentage));
     console.writeLine();
