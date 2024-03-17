@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'process.dart';
 
 // A record that reflects the order in which cpu metric in /proc/stat are listed
 typedef CPUMetrics = ({

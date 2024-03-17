@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:linux_proc/src/cpu_running_stats.dart';
+import 'package:linux_proc/src/mem_info.dart';
 
 import 'process.dart';
 import 'system_stats.dart';
@@ -27,6 +28,11 @@ class StatsManager {
   Stream<Stats> get stream => _controller.stream;
 
   void _getStats() async {
+    // todo: This global is ugly.
+    // maybe we need a class that caches all the static info (groups,users,memory)
+    if (totalMemoryKb == 1) {
+      totalMemoryKb = await getTotalMemory();
+    }
     var stats = await SystemStats.getStats();
     var procs = await Process.getAllProcesses();
     _cpuRunningStats ??=

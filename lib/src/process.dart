@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:linux_proc/src/mem_info.dart';
+
 import 'passwd.dart';
 
 /// Linux Process Utilities
@@ -158,6 +160,8 @@ Future<ProcMap> parseProcStatus(int pid) async {
         values['$key.effective'] = int.tryParse(vals[1]);
       } else if (key.endsWith('id')) {
         values[key] = int.tryParse(value);
+      } else if (key.startsWith('Vm')) {
+        values[key] = int.tryParse(value);
       } else {
         values[key] = value;
       }
@@ -194,6 +198,9 @@ class Process {
   int get uid => procMap['Uid'];
   String get userName => passwd.userName;
   int get totalCPU => userTime + systemTime;
+  // resident set size
+  int get rss => procMap['VmRSS'] ?? 0;
+  double get memoryPercentage => (rss * 100.0) / totalMemoryKb;
 
   // Calculate the percentage of CPU this process is consuming.
   // The side effect sets the [cpuPercentage] value so we

@@ -16,6 +16,10 @@ void main(List<String> arguments) async {
         'CPU Usage: ${_dl('user', s.userTimePercentage)}${_dl('sys', s.systemTimePercentage)}${_dl('idle', s.idleTimePercentage)}');
 
     console.writeLine();
+    console.setBackgroundColor(ConsoleColor.white);
+    console.setForegroundColor(ConsoleColor.black);
+    console.writeLine('     PID USER       %CPU %MEM COMMAND');
+    console.resetColorAttributes();
 
     _printProcs(stat.processes);
   }
@@ -26,16 +30,21 @@ void main(List<String> arguments) async {
 String _dfmt(double n) => n.toStringAsFixed(1);
 String _dl(String label, double n) => '${_dfmt(n)}% $label, ';
 
-var i = 0;
 void _printProcs(List<Process> plist) {
   Process.sort(plist, (p) => p.cpuPercentage, false);
 
+  var i = 0;
+
   for (final p in plist) {
-    if (p.cpuPercentage == 0.0) continue;
-    console.writeAligned(p.procPid, 8);
-    console.writeAligned(p.command, 30);
-    console.writeAligned(_dfmt(p.cpuPercentage));
+    // dont make window scroll
+    if (i++ > (console.windowHeight - 5)) break;
+    console.writeAligned(p.procPid, 8, TextAlignment.right);
+    console.writeAligned(' ${p.userName}', 12);
+    console.writeAligned(_dfmt(p.cpuPercentage), 4, TextAlignment.right);
+    console.writeAligned(_dfmt(p.memoryPercentage), 4, TextAlignment.right);
+    // console.writeAligned('${p.rss}');
+    console.writeAligned(' ${p.command}', 30);
+
     console.writeLine();
-    // if (++i > 30) break;
   }
 }
