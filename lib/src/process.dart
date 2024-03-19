@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:linux_proc/src/mem_info.dart';
-
 import 'passwd.dart';
 
 /// Linux Process Utilities
@@ -131,6 +129,8 @@ Future<ProcMap> parseProcStat(int pid) async {
   }
 }
 
+final whiteSpaceRegEx = RegExp(r'\s+');
+
 /// Parses /proc/$pid/status
 
 Future<ProcMap> parseProcStatus(int pid) async {
@@ -145,26 +145,22 @@ Future<ProcMap> parseProcStatus(int pid) async {
   ProcMap values = {};
 
   for (final line in lines) {
-    final parts = line.split(':');
-    if (parts.length == 2) {
-      final key = parts[0].trim();
-      final value = parts[1].trim();
-      // special value handling...
-      // generally id's are single value ints,
-      // but UID / GID containt  the real,effective,saved set,filesystem ids
-      // Right now we only care about the real and effective uid
+    final parts = line.split(whiteSpaceRegEx);
+    // trim the :
+    final key = parts[0].substring(0, parts[0].length - 1);
+    final value = parts[1];
 
-      if (key == 'Uid' || key == 'Gid') {
-        var vals = value.split('\t');
-        values[key] = int.tryParse(vals[0]);
-        values['$key.effective'] = int.tryParse(vals[1]);
-      } else if (key.endsWith('id')) {
-        values[key] = int.tryParse(value);
-      } else if (key.startsWith('Vm')) {
-        values[key] = int.tryParse(value);
-      } else {
-        values[key] = value;
-      }
+    // special value handling...
+    // generally id's are single value ints,
+    // but UID / GID containt  the real,effective,saved set,filesystem ids
+    // Right now we only care about the real and effective uid
+
+    // uid / gid have 4 int values on the same line. Grab the first two
+    if (key == 'Uid' || key == 'Gid') {
+      values[key] = int.tryParse(value);
+      values['$key.effective'] = int.tryParse(parts[2]);
+    } else {
+      values[key] = int.tryParse(value) ?? value;
     }
   }
 
@@ -199,8 +195,13 @@ class Process {
   String get userName => passwd.userName;
   int get totalCPU => userTime + systemTime;
   // resident set size
-  int get rss => procMap['VmRSS'] ?? 0;
-  double get memoryPercentage => (rss * 100.0) / totalMemoryKb;
+  int get rss => procMap['VmRSS'] ?? procMap['rss'] ?? 0;
+  // vmSize..
+  int get vmSize => procMap['VmSize'] ?? 0;
+
+  // calculate memory percentage of the RSS relative to the supplied total
+  double memoryPercentage(int totalMemory) =>
+      (rss * 100.0) / totalMemory.toDouble();
 
   // Calculate the percentage of CPU this process is consuming.
   // The side effect sets the [cpuPercentage] value so we
@@ -233,6 +234,10 @@ class Process {
     }
     var pw = await Passwd.getPasswdEntry(procStatusMap['Uid']);
     procMap.addAll(procStatusMap);
+    // DEBUG.
+    // if (pid == 1428) {
+    //   print('foo');
+    // }
     return procMap.isEmpty ? null : Process(procMap, pw!);
   }
 

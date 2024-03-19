@@ -6,22 +6,26 @@ final console = Console();
 void main(List<String> arguments) async {
   final statsStream = StatsManager(refreshTimeSeconds: 2);
 
+  var memInfo = await getMemoryInfo();
+
   console.clearScreen();
 
   await for (final stat in statsStream.stream) {
     var s = stat.stats;
     console.resetCursorPosition();
 
-    console.writeLine(
-        'CPU Usage: ${_dl('user', s.userTimePercentage)}${_dl('sys', s.systemTimePercentage)}${_dl('idle', s.idleTimePercentage)}');
+    // console.writeLine(
+    //     'CPU Usage: ${_dl('user', s.userTimePercentage)}${_dl('sys', s.systemTimePercentage)}${_dl('idle', s.idleTimePercentage)}');
 
+    console.writeLine(
+        'Memory: ${memInfo.memTotal} free: ${memInfo.memFree} available: ${memInfo.memAvailable} Processes: ${s.processes} running: ${s.procsRunning} blocked ${s.procsBlocked}');
     console.writeLine();
     console.setBackgroundColor(ConsoleColor.white);
     console.setForegroundColor(ConsoleColor.black);
-    console.writeLine('     PID USER       %CPU %MEM COMMAND');
+    console.writeLine('     PID USER       %CPU    Virt   RSS %MEM COMMAND');
     console.resetColorAttributes();
 
-    _printProcs(stat.processes);
+    _printProcs(stat.processes, memInfo);
   }
 
   console.resetColorAttributes();
@@ -29,8 +33,9 @@ void main(List<String> arguments) async {
 
 String _dfmt(double n) => n.toStringAsFixed(1);
 String _dl(String label, double n) => '${_dfmt(n)}% $label, ';
+String _memoryFmt(int kb) => '${(kb / 1000000.0).toStringAsFixed(1)}g';
 
-void _printProcs(List<Process> plist) {
+void _printProcs(List<Process> plist, MemInfo m) {
   Process.sort(plist, (p) => p.cpuPercentage, false);
 
   var i = 0;
@@ -38,11 +43,15 @@ void _printProcs(List<Process> plist) {
   for (final p in plist) {
     // dont make window scroll
     if (i++ > (console.windowHeight - 5)) break;
+
     console.writeAligned(p.procPid, 8, TextAlignment.right);
     console.writeAligned(' ${p.userName}', 12);
     console.writeAligned(_dfmt(p.cpuPercentage), 4, TextAlignment.right);
-    console.writeAligned(_dfmt(p.memoryPercentage), 4, TextAlignment.right);
-    // console.writeAligned('${p.rss}');
+    console.writeAligned(_memoryFmt(p.vmSize), 8, TextAlignment.right);
+    console.writeAligned(_memoryFmt(p.rss), 7, TextAlignment.right);
+
+    console.writeAligned(
+        _dfmt(p.memoryPercentage(m.memTotal)), 5, TextAlignment.right);
     console.writeAligned(' ${p.command}', 30);
 
     console.writeLine();

@@ -4,14 +4,17 @@ int totalMemoryKb = 1; // global... so we can cache this. Ugly
 
 final whiteSplitRegEx = RegExp(r'\s+');
 
+typedef MemInfo = ({int memTotal, int memFree, int memAvailable});
+
 /// Gets the total system memory in kilobytes.
 /// cache this so subsquent lookups are fast. Memory
 ///
-Future<int> getTotalMemory() async {
+Future<MemInfo> getMemoryInfo() async {
   final meminfoFile = File('/proc/meminfo');
   if (!await meminfoFile.exists()) {
     throw ArgumentError('Failed to read /proc/meminfo');
   }
+  MemInfo m = (memTotal: 0, memAvailable: 0, memFree: 0);
 
   final lines = await meminfoFile.readAsLines();
   for (final line in lines) {
@@ -21,13 +24,26 @@ Future<int> getTotalMemory() async {
     }
 
     final key = parts[0];
-    final value = parts[1];
-    if (key == 'MemTotal:') {
-      totalMemoryKb = int.parse(value);
-    }
+    final value = int.tryParse(parts[1]) ?? 0;
 
-    return totalMemoryKb;
+    m = switch (key) {
+      'MemTotal:' => (
+          memTotal: value,
+          memFree: m.memFree,
+          memAvailable: m.memAvailable
+        ),
+      'MemFree:' => (
+          memTotal: m.memTotal,
+          memFree: value,
+          memAvailable: m.memAvailable
+        ),
+      'MemAvailable:' => (
+          memTotal: m.memTotal,
+          memFree: m.memFree,
+          memAvailable: value
+        ),
+      _ => m
+    };
   }
-
-  throw ArgumentError('Failed to find MemTotal in /proc/meminfo');
+  return m;
 }
