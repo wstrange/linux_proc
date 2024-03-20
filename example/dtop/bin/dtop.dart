@@ -14,12 +14,12 @@ void main(List<String> arguments) async {
     var s = stat.stats;
     console.resetCursorPosition();
 
-    // console.writeLine(
-    //     'CPU Usage: ${_dl('user', s.userTimePercentage)}${_dl('sys', s.systemTimePercentage)}${_dl('idle', s.idleTimePercentage)}');
+    console.writeLine(
+        'CPU Usage: ${_dl('user', s.userTimePercentage)}${_dl('sys', s.systemTimePercentage)}${_dl('idle', s.idleTimePercentage)}');
 
     console.writeLine(
-        'Memory: ${memInfo.memTotal} free: ${memInfo.memFree} available: ${memInfo.memAvailable} Processes: ${s.processes} running: ${s.procsRunning} blocked ${s.procsBlocked}');
-    console.writeLine();
+        'Memory: ${memInfo.memTotal} free: ${memInfo.memFree} available: ${memInfo.memAvailable} Tasks: ${stat.processes.length} running: ${s.procsRunning} blocked ${s.procsBlocked}');
+
     console.setBackgroundColor(ConsoleColor.white);
     console.setForegroundColor(ConsoleColor.black);
     console.writeLine('     PID USER       %CPU    Virt   RSS  %MEM COMMAND');

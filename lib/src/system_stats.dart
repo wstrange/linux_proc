@@ -19,6 +19,8 @@ typedef CPUMetrics = ({
 /// See
 /// https://www.kernel.org/doc/html/latest/filesystems/proc.html#miscellaneous-kernel-statistics-in-proc-stat
 /// https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
+///
+/// Parses /proc/stat   - system level stats
 class SystemStats {
   final CPUMetrics cpu;
   final List<CPUMetrics> cpus;
@@ -49,6 +51,8 @@ class SystemStats {
     while (lines[i].startsWith('cpu')) {
       l.add(_parseCPU(lines[i++]));
     }
+
+    ++i; // next line is the intr - which we dont care abou right now..
 
     return SystemStats(
       cpu: cpu,
