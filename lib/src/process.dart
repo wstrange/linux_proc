@@ -234,10 +234,7 @@ class Process {
     }
     var pw = await Passwd.getPasswdEntry(procStatusMap['Uid']);
     procMap.addAll(procStatusMap);
-    // DEBUG.
-    // if (pid == 1428) {
-    //   print('foo');
-    // }
+
     return procMap.isEmpty ? null : Process(procMap, pw!);
   }
 

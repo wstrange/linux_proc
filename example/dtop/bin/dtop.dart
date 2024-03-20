@@ -22,7 +22,7 @@ void main(List<String> arguments) async {
     console.writeLine();
     console.setBackgroundColor(ConsoleColor.white);
     console.setForegroundColor(ConsoleColor.black);
-    console.writeLine('     PID USER       %CPU    Virt   RSS %MEM COMMAND');
+    console.writeLine('     PID USER       %CPU    Virt   RSS  %MEM COMMAND');
     console.resetColorAttributes();
 
     _printProcs(stat.processes, memInfo);
