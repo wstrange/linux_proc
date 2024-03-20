@@ -1,6 +1,6 @@
 # linux_proc: Linux process utilities
 
-A package that reads Linux process status and DBus services.
+A Dart package to read Linux process status and DBus services.
 
 
 ## Features
