@@ -26,13 +26,6 @@ main() async {
     }
   });
 
-  test('parse status', () async {
-    var m = await parseProcStatus(pid);
-
-    print('Got process status m: $m');
-    expect(m['Pid'], equals(pid));
-  });
-
   test('Get current process', () async {
     var p = await Process.getProcess(pid);
     expect(p, isNotNull);

@@ -6,8 +6,6 @@ final console = Console();
 void main(List<String> arguments) async {
   final statsStream = StatsManager(refreshTimeSeconds: 2);
 
-  var memInfo = await getMemoryInfo();
-
   console.clearScreen();
 
   await for (final stat in statsStream.stream) {
@@ -17,6 +15,7 @@ void main(List<String> arguments) async {
     console.writeLine(
         'CPU Usage: ${_dl('user', s.userTimePercentage)}${_dl('sys', s.systemTimePercentage)}${_dl('idle', s.idleTimePercentage)}');
 
+    final memInfo = stat.memInfo;
     console.writeLine(
         'Memory: ${memInfo.memTotal} free: ${memInfo.memFree} available: ${memInfo.memAvailable} Tasks: ${stat.processes.length} running: ${s.procsRunning} blocked ${s.procsBlocked}');
 

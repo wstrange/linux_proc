@@ -8,7 +8,7 @@ import 'passwd.dart';
 /// The gist is that under /proc/{pid} you have a number of virtual
 /// files that describe the process.
 /// You need to read from both the `status` and `stat` files to get
-/// relatively complete picture of the process.
+/// a complete picture of the process.
 ///
 ///
 
@@ -18,6 +18,8 @@ final _procDir = Directory('/proc');
 // the value is either a String or a number
 typedef ProcMap = Map<String, dynamic>;
 
+/// Get a list of all running process id's
+///
 Future<List<int>> getAllPids() async {
   var l = <int>[];
 
@@ -35,7 +37,7 @@ Future<List<int>> getAllPids() async {
 
 /// Parses /proc/$pid/stat
 ///
-Future<ProcMap> parseProcStat(int pid) async {
+Future<ProcMap> _parseProcStat(int pid) async {
   final filePath = File('/proc/$pid/stat');
 
   try {
@@ -133,7 +135,7 @@ final whiteSpaceRegEx = RegExp(r'\s+');
 
 /// Parses /proc/$pid/status
 
-Future<ProcMap> parseProcStatus(int pid) async {
+Future<ProcMap> _parseProcStatus(int pid) async {
   final filePath = '/proc/$pid/status';
   final file = File(filePath);
 
@@ -225,8 +227,8 @@ class Process {
   );
 
   static Future<Process?> getProcess(int pid) async {
-    var procMap = await parseProcStat(pid);
-    var procStatusMap = await parseProcStatus(pid);
+    var procMap = await _parseProcStat(pid);
+    var procStatusMap = await _parseProcStatus(pid);
     // based on timing, the process might have gone away,
     // so don't add it.
     if (procMap.isEmpty || procStatusMap.isEmpty) {
