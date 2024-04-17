@@ -35,8 +35,6 @@ String _dl(String label, double n) => '${_dfmt(n)}% $label, ';
 String _memoryFmt(int kb) => '${(kb / 1000000.0).toStringAsFixed(1)}g';
 
 void _printProcs(List<Process> plist, MemInfo m) {
-  Process.sort(plist, (p) => p.cpuPercentage, false);
-
   var i = 0;
 
   for (final p in plist) {

@@ -131,7 +131,7 @@ Future<ProcMap> _parseProcStat(int pid) async {
   }
 }
 
-final whiteSpaceRegEx = RegExp(r'\s+');
+final _whiteSpaceRegEx = RegExp(r'\s+');
 
 /// Parses /proc/$pid/status
 
@@ -147,7 +147,7 @@ Future<ProcMap> _parseProcStatus(int pid) async {
   ProcMap values = {};
 
   for (final line in lines) {
-    final parts = line.split(whiteSpaceRegEx);
+    final parts = line.split(_whiteSpaceRegEx);
     // trim the :
     final key = parts[0].substring(0, parts[0].length - 1);
     final value = parts[1];
@@ -270,12 +270,20 @@ class Process {
   @override
   int get hashCode => procPid.hashCode;
 
-  /// Given a list of processes, sort by field (cpu, created, etc)
-  static void sort(List<Process> l, ProcField getField, bool asc) {
+  /// Given a list of processes [l], sort by field [getField] in
+  /// [asc] ascending/decending order
+  ///
+  /// For example, (cpu, created, etc)
+  ///  Process.sort(myProcs, (p) => p.cpuPercentage, true)
+  /// Note the list is sorted in place. The same list is returned.
+  static List<Process> sort(List<Process> l, ProcessField getField, bool asc) {
     l.sort((a, b) => asc
         ? getField(a).compareTo(getField(b))
         : getField(b).compareTo(getField(a)));
+    return l;
   }
 }
 
-typedef ProcField = Comparable Function(Process p);
+/// Typedef to represent a field getter on a Process object.
+/// This is used by [Process.sort]
+typedef ProcessField = Comparable Function(Process p);

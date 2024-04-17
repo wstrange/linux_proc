@@ -10,8 +10,6 @@ main() async {
 
   var buffer = Uint8List(200);
 
-  print('Pid = $pid');
-
   int count = 0;
   var timer = Timer.periodic(Duration(milliseconds: 50), (t) async {
     // var lines = await procFile.readAsLines();

@@ -17,7 +17,6 @@ class SystemD {
   }
 
   Future<List<Service>> getUnits() async {
-    print('GetUnits()');
     var r = await dbus.callListUnits();
 
     var l = <Service>[];
