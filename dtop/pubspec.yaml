@@ -11,7 +11,7 @@ environment:
 dependencies:
   dart_console2: ^3.0.0
   linux_proc:
-    path: ../../
+    path: ../
 
 dev_dependencies:
   lints: ^3.0.0
