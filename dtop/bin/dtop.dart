@@ -1,14 +1,16 @@
 import 'package:linux_proc/linux_proc.dart';
-import 'package:dart_console2/dart_console2.dart';
+import 'package:dart_console/dart_console.dart';
 
 final console = Console();
 
+// A Dart version of the Linux [top] command
+//
 void main(List<String> arguments) async {
-  final statsStream = StatsManager(refreshTimeSeconds: 2);
+  final statsManager = StatsManager(refreshTimeSeconds: 2);
 
   console.clearScreen();
 
-  await for (final stat in statsStream.stream) {
+  await for (final stat in statsManager.stream) {
     var s = stat.stats;
     console.resetCursorPosition();
 

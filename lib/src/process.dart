@@ -23,6 +23,8 @@ typedef ProcMap = Map<String, dynamic>;
 Future<List<int>> getAllPids() async {
   var l = <int>[];
 
+  // try testing sync instead
+  // for (final d in _procDir.listSync()) {
   await for (final d in _procDir.list()) {
     var proc = d.path.split('/').last;
     var pid = int.tryParse(proc);
@@ -37,17 +39,20 @@ Future<List<int>> getAllPids() async {
 
 /// Parses /proc/$pid/stat
 ///
-Future<ProcMap> _parseProcStat(int pid) async {
+ProcMap _parseProcStat(int pid) {
   final filePath = File('/proc/$pid/stat');
 
   try {
     // its possible that the process could now be gone by the time
     // we try to stat it, so check and return an empty map if that is the case
-    if (!await filePath.exists()) {
-      return {};
-    }
 
-    final lines = await filePath.readAsLines();
+    // We now remove this, catch the exception and just return an empty map
+    // The result is the same, and it improves performance by
+    // if (!await filePath.exists()) {
+    //   return {};
+    // }
+
+    final lines = filePath.readAsLinesSync();
 
     if (lines.isEmpty) {
       return {};
@@ -126,8 +131,11 @@ Future<ProcMap> _parseProcStat(int pid) async {
       // ... further process fields if needed
     };
   } catch (error) {
-    print('Error parsing $filePath: $error');
-    rethrow; // Rethrow the error for proper handling
+    // For performance concerns, we just return an empty map here
+    // instead of throwing an error. THe likely cause of an exception
+    // is the pid no longer exists - so returing an empty map is
+    // a graceful degradation.
+    return {};
   }
 }
 
@@ -135,35 +143,40 @@ final _whiteSpaceRegEx = RegExp(r'\s+');
 
 /// Parses /proc/$pid/status
 
-Future<ProcMap> _parseProcStatus(int pid) async {
+ProcMap _parseProcStatus(int pid) {
   final filePath = '/proc/$pid/status';
   final file = File(filePath);
 
-  if (!await file.exists()) {
-    return {};
-  }
-
-  final lines = await file.readAsLines();
   ProcMap values = {};
 
-  for (final line in lines) {
-    final parts = line.split(_whiteSpaceRegEx);
-    // trim the :
-    final key = parts[0].substring(0, parts[0].length - 1);
-    final value = parts[1];
+  // omit as it costs performance
+  // final lines = await file.readAsLines();
 
-    // special value handling...
-    // generally id's are single value ints,
-    // but UID / GID containt  the real,effective,saved set,filesystem ids
-    // Right now we only care about the real and effective uid
+  try {
+    final lines = file.readAsLinesSync();
 
-    // uid / gid have 4 int values on the same line. Grab the first two
-    if (key == 'Uid' || key == 'Gid') {
-      values[key] = int.tryParse(value);
-      values['$key.effective'] = int.tryParse(parts[2]);
-    } else {
-      values[key] = int.tryParse(value) ?? value;
+    for (final line in lines) {
+      final parts = line.split(_whiteSpaceRegEx);
+      // trim the :
+      final key = parts[0].substring(0, parts[0].length - 1);
+      final value = parts[1];
+
+      // special value handling...
+      // generally id's are single value ints,
+      // but UID / GID containt  the real,effective,saved set,filesystem ids
+      // Right now we only care about the real and effective uid
+
+      // uid / gid have 4 int values on the same line. Grab the first two
+      if (key == 'Uid' || key == 'Gid') {
+        values[key] = int.tryParse(value);
+        values['$key.effective'] = int.tryParse(parts[2]);
+      } else {
+        values[key] = int.tryParse(value) ?? value;
+      }
     }
+  } catch (e) {
+    // we ignore the error - which might be caused by pid no longer
+    // existing.
   }
 
   return values;
@@ -227,8 +240,8 @@ class Process {
   );
 
   static Future<Process?> getProcess(int pid) async {
-    var procMap = await _parseProcStat(pid);
-    var procStatusMap = await _parseProcStatus(pid);
+    var procMap = _parseProcStat(pid);
+    var procStatusMap = _parseProcStatus(pid);
     // based on timing, the process might have gone away,
     // so don't add it.
     if (procMap.isEmpty || procStatusMap.isEmpty) {
