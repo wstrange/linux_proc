@@ -34,7 +34,6 @@ class StatsManager {
   final statsQueue = Queue<Stats>();
   final int _queueSize;
 
-  CPURunningStats? _cpuRunningStats;
   int _refreshTimeSeconds;
   // The default sort function for processes
   ProcessField _procSortFn = (p) => p.cpuPercentage;
@@ -68,7 +67,10 @@ class StatsManager {
   /// Resets the refresh interval.
   ///
   /// To pause stats collection, set seconds to 0.
-  void setRefreshSeonds(int seconds) {
+  /// Note if you change the update interval (say from 2 to 4)
+  /// you need to collect 2 or more samples for the CPU running stats
+  /// to sync up.
+  void setRefreshSeconds(int seconds) {
     _stopTimer();
     _refreshTimeSeconds = seconds;
     if (seconds > 0) {
@@ -95,6 +97,11 @@ class StatsManager {
     _sortAscending = asc;
   }
 
+  // Keeps track of running CPU stats. This is used
+  // to compare the current cpu consumption vs. the previous load N seconds ago
+  // when the last sample was taken.
+  CPURunningStats? _cpuRunningStats;
+
   void _getStats(Timer t) async {
     var stats = await SystemStats.getStats();
     var procs = await Process.getAllProcesses();
@@ -102,6 +109,8 @@ class StatsManager {
 
     _cpuRunningStats ??=
         CPURunningStats(stats, procs, _refreshTimeSeconds.toDouble());
+
+    // This will update things like cpuPercentage in the stats and proccess.
     _cpuRunningStats!.update(stats, procs);
 
     final s = Stats(
