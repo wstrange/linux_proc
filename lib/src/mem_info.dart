@@ -9,14 +9,14 @@ typedef MemInfo = ({int memTotal, int memFree, int memAvailable});
 /// Gets the total system memory in kilobytes.
 /// cache this so subsquent lookups are fast. Memory
 ///
-Future<MemInfo> getMemoryInfo() async {
+MemInfo getMemoryInfo() {
   final meminfoFile = File('/proc/meminfo');
-  if (!await meminfoFile.exists()) {
+  if (!meminfoFile.existsSync()) {
     throw ArgumentError('Failed to read /proc/meminfo');
   }
   MemInfo m = (memTotal: 0, memAvailable: 0, memFree: 0);
 
-  final lines = await meminfoFile.readAsLines();
+  final lines = meminfoFile.readAsLinesSync();
   for (final line in lines) {
     final parts = line.split(whiteSplitRegEx);
     if (parts.length < 2) {

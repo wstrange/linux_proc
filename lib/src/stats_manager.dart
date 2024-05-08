@@ -102,10 +102,10 @@ class StatsManager {
   // when the last sample was taken.
   CPURunningStats? _cpuRunningStats;
 
-  void _getStats(Timer t) async {
-    var stats = await SystemStats.getStats();
-    var procs = await Process.getAllProcesses();
-    var memInfo = await getMemoryInfo();
+  void _getStats(Timer t) {
+    var stats = SystemStats.getStats();
+    var procs = Process.getAllProcesses();
+    var memInfo = getMemoryInfo();
 
     _cpuRunningStats ??=
         CPURunningStats(stats, procs, _refreshTimeSeconds.toDouble());

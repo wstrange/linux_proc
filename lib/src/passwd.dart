@@ -72,9 +72,9 @@ class Passwd {
   /// returns a [Passwd] for the uid, or null if no entry exists
   /// The passwd map is cached in memory. Call getPasswdMap() to
   /// refresh the entries.
-  static Future<Passwd?> getPasswdEntry(int uid) async {
+  static Passwd? getPasswdEntry(int uid) {
     if (_passwdMapCache.isEmpty) {
-      _passwdMapCache.addAll(await getPasswdMap());
+      _passwdMapCache.addAll(getPasswdMap());
     }
     return _passwdMapCache[uid];
   }
@@ -82,10 +82,10 @@ class Passwd {
   /// Return a Map of /etc/passwd entries. The map key is a uid,
   /// the value is a [Passwd].
   /// The /etc/passwd file is re-read every time this is called.
-  static Future<Map<int, Passwd>> getPasswdMap() async {
+  static Map<int, Passwd> getPasswdMap() {
     final m = <int, Passwd>{};
 
-    final lines = await File('/etc/passwd').readAsLines();
+    final lines = File('/etc/passwd').readAsLinesSync();
     for (final line in lines) {
       final v = line.split(':');
       int uid = int.parse(v[2]);

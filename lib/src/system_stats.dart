@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -117,8 +116,8 @@ class SystemStats {
   static int _get2ndValue(String l) => _getInt(l.split(_whiteSpace)[1]);
   static int _getInt(String t) => int.tryParse(t) ?? 0;
 
-  static Future<SystemStats> getStats() async {
-    var b = await _statsFile.readAsBytes();
+  static SystemStats getStats() {
+    var b = _statsFile.readAsBytesSync();
     return SystemStats.fromBuffer(b);
   }
 

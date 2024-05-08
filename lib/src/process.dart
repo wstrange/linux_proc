@@ -20,12 +20,12 @@ typedef ProcMap = Map<String, dynamic>;
 
 /// Get a list of all running process id's
 ///
-Future<List<int>> getAllPids() async {
+List<int> getAllPids() {
   var l = <int>[];
 
   // try testing sync instead
   // for (final d in _procDir.listSync()) {
-  await for (final d in _procDir.list()) {
+  for (final d in _procDir.listSync()) {
     var proc = d.path.split('/').last;
     var pid = int.tryParse(proc);
     // pid above might not be a number (/proc contains other things)
@@ -239,7 +239,7 @@ class Process {
     this.passwd,
   );
 
-  static Future<Process?> getProcess(int pid) async {
+  static Process? getProcess(int pid) {
     var procMap = _parseProcStat(pid);
     var procStatusMap = _parseProcStatus(pid);
     // based on timing, the process might have gone away,
@@ -247,7 +247,7 @@ class Process {
     if (procMap.isEmpty || procStatusMap.isEmpty) {
       return null;
     }
-    var pw = await Passwd.getPasswdEntry(procStatusMap['Uid']);
+    var pw = Passwd.getPasswdEntry(procStatusMap['Uid']);
     procMap.addAll(procStatusMap);
 
     return procMap.isEmpty ? null : Process(procMap, pw!);
@@ -255,13 +255,13 @@ class Process {
 
   /// Get a map of all running process keyed by pid
   ///
-  static Future<Map<int, Process>> getAllProcesses() async {
-    var pids = await getAllPids();
+  static Map<int, Process> getAllProcesses() {
+    var pids = getAllPids();
 
     final m = <int, Process>{};
 
     for (final pid in pids) {
-      var p = await getProcess(pid);
+      var p = getProcess(pid);
       if (p != null) {
         m[pid] = p;
       }
