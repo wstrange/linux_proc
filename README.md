@@ -45,7 +45,7 @@ dart pub get
 dart run bin/dtop.dart
 ````
 
-![](https://github.com/wstrange/linux_proc/dtop.gif)
+![dtop gif](https://github.com/wstrange/linux_proc/dtop.gif)
 
 ## Performance
 
