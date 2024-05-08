@@ -36,7 +36,7 @@ DBus is still very much a work in progress.
 
 ## Dart Top
 
-See [dtop](github.com/wstrange/linux_proc/dtop)) for an example of how to use this package to implement a Dart version of the Linux top(1) command.
+See [dtop](github.com/wstrange/linux_proc/dtop) for an example of how to use this package to implement a Dart version of the Linux top(1) command.
 
 
 ```dart
@@ -45,6 +45,7 @@ dart pub get
 dart run bin/dtop.dart
 ````
 
+![](https://github.com/wstrange/linux_proc/dtop.gif)
 
 ## Performance
 
