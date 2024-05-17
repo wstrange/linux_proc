@@ -141,11 +141,20 @@ class SystemStats {
 
     var idleDiff = (idleAllTime - prev.idleAllTime).toDouble();
     userTimePercentage =
-        (totalUserTime - prev.totalUserTime) / totalDiff * 100.0;
+        _naNGuard((totalUserTime - prev.totalUserTime) / totalDiff * 100.0);
+
+    // The very first stats may be a Nan as the previous comparison is missing
+
     systemTimePercentage =
-        (systemAllTime - prev.systemAllTime) / totalDiff * 100.0;
-    idleTimePercentage = (idleDiff / totalDiff) * 100.0;
+        _naNGuard((systemAllTime - prev.systemAllTime) / totalDiff * 100.0);
+
+    idleTimePercentage = _naNGuard(idleDiff / totalDiff) * 100.0;
   }
+
+  // We can get wonky values - esp for the very first stat collection
+  // where there is no previous result. This "protects" the results
+  // by returning a zero.
+  double _naNGuard(double x) => x.isNaN ? 0.0 : x;
 
   @override
   String toString() => 'SystemsStats(cpu: $cpu)';

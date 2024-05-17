@@ -34,6 +34,9 @@ class StatsManager {
   final statsQueue = Queue<Stats>();
   final int _queueSize;
 
+  /// The most recent stats collected
+  late Stats currentStats;
+
   int _refreshTimeSeconds;
   // The default sort function for processes
   ProcessField _procSortFn = (p) => p.cpuPercentage;
@@ -52,11 +55,13 @@ class StatsManager {
       onResume: _startTimer,
       onCancel: _stopTimer,
     );
+    _getStats();
     _stream = _controller.stream.asBroadcastStream();
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: _refreshTimeSeconds), _getStats);
+    _timer =
+        Timer.periodic(Duration(seconds: _refreshTimeSeconds), _getStatsTimer);
   }
 
   void _stopTimer() {
@@ -102,7 +107,9 @@ class StatsManager {
   // when the last sample was taken.
   CPURunningStats? _cpuRunningStats;
 
-  void _getStats(Timer t) {
+  void _getStatsTimer(Timer t) => _getStats();
+
+  void _getStats() {
     var stats = SystemStats.getStats();
     var procs = Process.getAllProcesses();
     var memInfo = getMemoryInfo();
@@ -113,14 +120,14 @@ class StatsManager {
     // This will update things like cpuPercentage in the stats and proccess.
     _cpuRunningStats!.update(stats, procs);
 
-    final s = Stats(
+    currentStats = Stats(
         stats: stats,
         processes:
             Process.sort(procs.values.toList(), _procSortFn, _sortAscending),
         memInfo: memInfo);
 
-    _controller.add(s);
-    statsQueue.addFirst(s);
+    _controller.add(currentStats);
+    statsQueue.addFirst(currentStats);
     if (statsQueue.length > _queueSize) {
       statsQueue.removeLast();
     }
