@@ -1,0 +1,14 @@
+[Unit]
+Description=demo service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=admin
+ExecStart=/usr/bin/env bash /home/admin/svc.sh
+
+[Install]
+WantedBy=multi-user.target

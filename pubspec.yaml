@@ -1,6 +1,6 @@
 name: linux_proc
 description: Parse Linux process and service information
-version: 0.0.1
+version: 0.0.2
 repository: https://github.com/wstrange/linux_proc
 
 environment:

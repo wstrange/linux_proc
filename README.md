@@ -55,4 +55,3 @@ The overhead is much lower using synchronous calls. For example, using async i/o
 
 If you are going to use this library in a Flutter application, you may need to run  the statistics gathering in an isolate to avoid blocking the UI thread.
 
-

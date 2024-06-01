@@ -34,6 +34,11 @@ class SystemD {
     // l.sort();
     return l;
   }
+
+  Future<String> stopUnit(String serviceName) async {
+    var r = await dbus.callStopUnit(serviceName, 'replace');
+    return r.value;
+  }
 }
 
 class Service {
