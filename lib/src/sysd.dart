@@ -164,6 +164,10 @@ class Service implements Comparable<Service> {
         objectPath.hashCode;
   }
 
+  bool isRunning() => this.subState == 'running';
+
+  bool isNotRunning() => !isRunning();
+
   @override
   int compareTo(Service other) => unitName.compareTo(other.unitName);
 
